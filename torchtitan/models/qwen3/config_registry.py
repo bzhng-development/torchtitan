@@ -101,6 +101,70 @@ def qwen3_1_7b() -> Trainer.Config:
     )
 
 
+def qwen3_4b() -> Trainer.Config:
+    return Trainer.Config(
+        hf_assets_path="./assets/hf/Qwen3-4B",
+        metrics=MetricsProcessor.Config(log_freq=1),
+        model_spec=model_registry("4B"),
+        dataloader=HuggingFaceTextDataLoader.Config(
+            dataset="ultrafineweb",
+        ),
+        optimizer=OptimizersContainer.Config(lr=3e-4),
+        lr_scheduler=LRSchedulersContainer.Config(warmup_steps=200),
+        training=TrainingConfig(
+            local_batch_size=4,
+            seq_len=4096,
+            steps=1000,
+        ),
+        checkpoint=CheckpointManager.Config(
+            interval=500,
+            last_save_model_only=False,
+            export_dtype="float16",
+        ),
+        activation_checkpoint=ActivationCheckpointConfig(
+            mode="selective",
+            selective_ac_option="op",
+        ),
+    )
+
+
+def qwen3_4b_mxfp8() -> Trainer.Config:
+    from torchtitan.components.quantization.mx import MXLinearConverter
+    from torchtitan.protocols.model_converter import ModelConvertersContainer
+
+    return Trainer.Config(
+        hf_assets_path="./assets/hf/Qwen3-4B",
+        metrics=MetricsProcessor.Config(log_freq=1),
+        model_spec=model_registry("4B"),
+        dataloader=HuggingFaceTextDataLoader.Config(
+            dataset="ultrafineweb",
+        ),
+        optimizer=OptimizersContainer.Config(lr=3e-4),
+        lr_scheduler=LRSchedulersContainer.Config(warmup_steps=200),
+        training=TrainingConfig(
+            local_batch_size=32,
+            seq_len=4096,
+            steps=1000,
+        ),
+        checkpoint=CheckpointManager.Config(
+            interval=500,
+            last_save_model_only=False,
+            export_dtype="float16",
+        ),
+        activation_checkpoint=ActivationCheckpointConfig(
+            mode="none",
+        ),
+        model_converters=ModelConvertersContainer.Config(
+            converters=[
+                MXLinearConverter.Config(
+                    recipe_name="mxfp8_cublas",
+                    filter_fqns=["output"],
+                ),
+            ],
+        ),
+    )
+
+
 def qwen3_32b() -> Trainer.Config:
     return Trainer.Config(
         hf_assets_path="./assets/hf/Qwen3-32B",

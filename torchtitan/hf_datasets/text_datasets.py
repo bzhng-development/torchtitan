@@ -48,6 +48,13 @@ DATASETS = {
         loader=partial(_load_c4_dataset, split="validation"),
         sample_processor=_process_c4_text,
     ),
+    "ultrafineweb": DatasetConfig(
+        path="openbmb/Ultra-FineWeb",
+        loader=lambda path: load_dataset(
+            path, split="en", streaming=True
+        ),
+        sample_processor=lambda sample: sample["content"],
+    ),
 }
 
 
